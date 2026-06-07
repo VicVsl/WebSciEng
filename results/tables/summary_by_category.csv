@@ -1,0 +1,10 @@
+category,mismatch_type,count,pct_of_category
+Books,match,325,90.03
+Books,soft_mismatch,31,8.59
+Books,strong_mismatch,5,1.39
+Clothing,match,310,89.08
+Clothing,soft_mismatch,28,8.05
+Clothing,strong_mismatch,10,2.87
+Electronics,match,406,88.07
+Electronics,soft_mismatch,39,8.46
+Electronics,strong_mismatch,16,3.47

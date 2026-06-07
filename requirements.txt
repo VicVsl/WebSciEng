@@ -1,0 +1,29 @@
+# Data loading
+datasets>=2.18.0         # HuggingFace datasets — loads Amazon Reviews 2023 by category
+huggingface-hub>=0.22.0
+
+# Sentiment analysis
+transformers>=4.40.0     # HuggingFace transformers (RoBERTa pipeline)
+torch>=2.2.0             # PyTorch backend
+
+# Data handling
+pandas>=2.2.0
+numpy>=1.26.0
+
+# Language detection (to filter non-English reviews)
+langdetect>=1.0.9
+
+# Visualisation
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# Progress bars
+tqdm>=4.66.0
+
+# Notebooks
+jupyter>=1.0.0
+ipykernel>=6.29.0
+
+# Metrics / stats
+scikit-learn>=1.4.0
+scipy>=1.13.0
