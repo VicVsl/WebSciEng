@@ -35,6 +35,9 @@ import matplotlib.ticker as mtick
 import pandas as pd
 import seaborn as sns
 
+from scipy.stats import chi2_contingency, mannwhitneyu
+import numpy as np
+
 # ---------------------------------------------------------------------------
 # Style
 # ---------------------------------------------------------------------------
@@ -78,6 +81,133 @@ def _save(fig: Figure, filename: str) -> None:
         out = FIGURES_DIR / f"{filename}.{ext}"
         fig.savefig(out, bbox_inches="tight")
     print(f"Saved figure → {FIGURES_DIR / filename}.png / .pdf")
+
+
+# ---------------------------------------------------------------------------
+# Statistical analysis helpers
+# ---------------------------------------------------------------------------
+
+def sentiment_confusion_matrix(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create a row-normalized confusion matrix comparing rating sentiment
+    against text sentiment.
+    """
+    cm = pd.crosstab(
+        df["rating_sentiment"],
+        df["text_sentiment"],
+        normalize="index",
+    ) * 100
+
+    return cm.round(2)
+
+
+def cramers_v(contingency: pd.DataFrame) -> float:
+    """
+    Compute Cramér's V effect size from a contingency table.
+    """
+    chi2 = chi2_contingency(contingency)[0]
+    n = contingency.to_numpy().sum()
+    r, k = contingency.shape
+
+    return np.sqrt(chi2 / (n * (min(r, k) - 1)))
+
+
+def chi_square_category_test(df: pd.DataFrame) -> dict:
+    """
+    Test whether mismatch rates differ across categories.
+    """
+    table = pd.crosstab(df["category"], df["is_mismatch"])
+
+    chi2, p, dof, _ = chi2_contingency(table)
+
+    return {
+        "chi2": chi2,
+        "p": p,
+        "dof": dof,
+        "cramers_v": cramers_v(table),
+    }
+
+
+
+def chi_square_rating_test(df: pd.DataFrame) -> dict:
+    """
+    Test whether mismatch rates differ across rating levels.
+    """
+    table = pd.crosstab(df["rating_int"], df["is_mismatch"])
+
+    chi2, p, dof, _ = chi2_contingency(table)
+
+    return {
+        "chi2": chi2,
+        "p": p,
+        "dof": dof,
+        "cramers_v": cramers_v(table),
+    }
+
+
+
+def confidence_comparison(df: pd.DataFrame) -> dict:
+    """
+    Compare sentiment-model confidence between matched and mismatched reviews.
+    """
+    matches = df[~df["is_mismatch"]]["sentiment_score"]
+    mismatches = df[df["is_mismatch"]]["sentiment_score"]
+
+    statistic, p = mannwhitneyu(
+        matches,
+        mismatches,
+        alternative="two-sided",
+    )
+
+    return {
+        "match_mean": matches.mean(),
+        "mismatch_mean": mismatches.mean(),
+        "u_statistic": statistic,
+        "p": p,
+    }
+
+
+
+def mismatch_direction_table(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Percentage breakdown of mismatch direction by category.
+    """
+    mismatches = df[df["is_mismatch"]]
+
+    table = (
+        pd.crosstab(
+            mismatches["category"],
+            mismatches["mismatch_direction"],
+            normalize="index",
+        ) * 100
+    )
+
+    return table.round(2)
+
+
+
+def review_length_analysis(df: pd.DataFrame) -> dict:
+    """
+    Compare review lengths between matches and mismatches.
+    """
+    data = df.copy()
+    data["review_length"] = data["text"].str.split().str.len()
+
+    matches = data[~data["is_mismatch"]]["review_length"]
+    mismatches = data[data["is_mismatch"]]["review_length"]
+
+    statistic, p = mannwhitneyu(
+        matches,
+        mismatches,
+        alternative="two-sided",
+    )
+
+    return {
+        "match_mean_length": matches.mean(),
+        "mismatch_mean_length": mismatches.mean(),
+        "u_statistic": statistic,
+        "p": p,
+    }
 
 
 # ---------------------------------------------------------------------------
